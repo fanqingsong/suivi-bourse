@@ -6,6 +6,8 @@ services:
     environment:
     - SB_SCRAPING_INTERVAL=${SCRAPING_INTERVAL}
     image: paulbrissaud/suivi-bourse-app:3.5.3
+#    ports:
+#      - 8081:8081
     restart: unless-stopped
     volumes:
     - ./config.yaml:/home/appuser/.config/SuiviBourse/config.yaml:ro
@@ -27,11 +29,13 @@ services:
     - --web.console.templates=/usr/share/prometheus/consoles
     container_name: suivi-bourse-prom
     image: prom/prometheus:v2.45.0
+#    ports:
+#      - 9090: 9090
     restart: unless-stopped
     volumes:
     - sb_prometheus_data:/prometheus
     - ./prometheus_provisioning:/etc/prometheus/
-version: '3.8'
+version: '3.3'
 volumes:
   sb_prometheus_data:
     driver: local

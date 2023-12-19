@@ -5,7 +5,7 @@ Paul Brissaud
 import os
 import sys
 from pathlib import Path
-
+import random
 import prometheus_client
 import yaml
 import yfinance as yf
@@ -40,6 +40,12 @@ class SuiviBourseMetrics:
     def init_metrics(self):
         if self.validate():
             common_labels = ['share_name', 'share_symbol']
+
+            self.sb_random_variable = prometheus_client.Gauge(
+                "sb_random_variable",
+                "sb random variable",
+                common_labels
+            )
 
             self.sb_share_price = prometheus_client.Gauge(
                 "sb_share_price",
@@ -92,6 +98,8 @@ class SuiviBourseMetrics:
         for share in self.configuration['shares'].get():
             label_values = [share['name'], share['symbol']]
 
+            self.sb_random_variable.labels(*label_values).set(random.randint(1, 100))
+
             self.sb_purchased_quantity.labels(
                 *label_values).set(share['purchase']['quantity'])
             self.sb_purchased_price.labels(
@@ -103,16 +111,16 @@ class SuiviBourseMetrics:
             self.sb_received_dividend.labels(
                 *label_values).set(share['estate']['received_dividend'])
 
-            try:
-                ticker = yf.Ticker(share['symbol'])
-                history = ticker.history()
-                last_quote = (history.tail(1)['Close'].iloc[0])
-                self.sb_share_price.labels(*label_values).set(last_quote)
-                info_values = label_values + [ticker.info.get('currency', 'undefined'), ticker.info.get('exchange', 'undefined'), ticker.info.get('quoteType', 'undefined')]
-                self.sb_share_info.labels(*info_values).set(1)
-            except (u_exceptions.NewConnectionError, RuntimeError):
-                app_logger.error(
-                    "Error while retrieving data from Yfinance API", exc_info=True)
+        # try:
+        # ticker = yf.Ticker(share['symbol'])
+        # history = ticker.history()
+        # last_quote = (history.tail(1)['Close'].iloc[0])
+        # self.sb_share_price.labels(*label_values).set(last_quote)
+        # info_values = label_values + [ticker.info.get('currency', 'undefined'), ticker.info.get('exchange', 'undefined'), ticker.info.get('quoteType', 'undefined')]
+        # self.sb_share_info.labels(*info_values).set(1)
+        # except (u_exceptions.NewConnectionError, RuntimeError):
+        # app_logger.error(
+        #     "Error while retrieving data from Yfinance API", exc_info=True)
 
     def run(self):
         self.configuration.reload()
